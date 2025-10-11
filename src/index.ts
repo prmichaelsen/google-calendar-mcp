@@ -29,7 +29,12 @@ if (!GOOGLE_CALENDAR_SUBJECT) {
 // Initialize service account auth with domain-wide delegation
 const auth = new google.auth.GoogleAuth({
   keyFile: GOOGLE_APPLICATION_CREDENTIALS,
-  scopes: ["https://www.googleapis.com/auth/calendar"],
+  scopes: [
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.modify",
+  ],
   clientOptions: {
     subject: GOOGLE_CALENDAR_SUBJECT, // User to impersonate for domain-wide delegation
   },
@@ -37,6 +42,9 @@ const auth = new google.auth.GoogleAuth({
 
 // Initialize Calendar API
 const calendar = google.calendar({ version: "v3", auth });
+
+// Initialize Gmail API
+const gmail = google.gmail({ version: "v1", auth });
 
 // Define tools
 const CREATE_EVENT_TOOL: Tool = {
@@ -190,6 +198,87 @@ const UPDATE_EVENT_TOOL: Tool = {
   },
 };
 
+const SEND_EMAIL_TOOL: Tool = {
+  name: "send_email",
+  description:
+    "Send an email from the configured Gmail account. Supports plain text and HTML emails with optional attachments.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      to: {
+        type: "array",
+        items: { type: "string" },
+        description: "Recipient email addresses",
+      },
+      subject: {
+        type: "string",
+        description: "Email subject",
+      },
+      body: {
+        type: "string",
+        description: "Email body (plain text or HTML)",
+      },
+      cc: {
+        type: "array",
+        items: { type: "string" },
+        description: "CC email addresses (optional)",
+      },
+      bcc: {
+        type: "array",
+        items: { type: "string" },
+        description: "BCC email addresses (optional)",
+      },
+      is_html: {
+        type: "boolean",
+        description: "Whether body is HTML (default: false)",
+        default: false,
+      },
+    },
+    required: ["to", "subject", "body"],
+  },
+};
+
+const LIST_EMAILS_TOOL: Tool = {
+  name: "list_emails",
+  description:
+    "List emails from Gmail inbox with optional search query. Returns email metadata including ID, subject, sender, and snippet.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      query: {
+        type: "string",
+        description: "Gmail search query (e.g., 'from:alice@example.com', 'subject:meeting', 'is:unread')",
+      },
+      max_results: {
+        type: "number",
+        description: "Maximum number of emails to return (default: 10, max: 100)",
+        default: 10,
+      },
+    },
+  },
+};
+
+const READ_EMAIL_TOOL: Tool = {
+  name: "read_email",
+  description:
+    "Read the full content of an email by its ID. Returns subject, sender, recipients, body, and metadata.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      email_id: {
+        type: "string",
+        description: "Email ID to read (from list_emails)",
+      },
+      mark_as_read: {
+        type: "boolean",
+        description: "Mark email as read after fetching (default: false)",
+        default: false,
+      },
+    },
+    required: ["email_id"],
+  },
+};
+
 // Tool handlers
 async function createCalendarEvent(args: any): Promise<string> {
   try {
@@ -306,6 +395,127 @@ async function updateCalendarEvent(args: any): Promise<string> {
     throw new Error(`Failed to update calendar event: ${error.message}`);
   }
 }
+async function sendEmail(args: any): Promise<string> {
+  try {
+    const to = Array.isArray(args.to) ? args.to.join(", ") : args.to;
+    const cc = args.cc && Array.isArray(args.cc) ? args.cc.join(", ") : "";
+    const bcc = args.bcc && Array.isArray(args.bcc) ? args.bcc.join(", ") : "";
+    
+    const contentType = args.is_html ? "text/html" : "text/plain";
+    
+    const messageParts = [
+      `To: ${to}`,
+      cc ? `Cc: ${cc}` : "",
+      bcc ? `Bcc: ${bcc}` : "",
+      `Subject: ${args.subject}`,
+      `Content-Type: ${contentType}; charset=utf-8`,
+      "",
+      args.body,
+    ].filter(Boolean);
+    
+    const message = messageParts.join("\r\n");
+    const encodedMessage = Buffer.from(message).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    
+    const response = await gmail.users.messages.send({
+      userId: "me",
+      requestBody: {
+        raw: encodedMessage,
+      },
+    });
+    
+    return `Email sent successfully!\nMessage ID: ${response.data.id}\nTo: ${to}${cc ? `\nCC: ${cc}` : ""}`;
+  } catch (error: any) {
+    throw new Error(`Failed to send email: ${error.message}`);
+  }
+}
+
+async function listEmails(args: any): Promise<string> {
+  try {
+    const response = await gmail.users.messages.list({
+      userId: "me",
+      q: args.query || "",
+      maxResults: Math.min(args.max_results || 10, 100),
+    });
+    
+    const messages = response.data.messages;
+    if (!messages || messages.length === 0) {
+      return "No emails found.";
+    }
+    
+    // Fetch details for each message
+    const emailDetails = await Promise.all(
+      messages.map(async (msg) => {
+        const details = await gmail.users.messages.get({
+          userId: "me",
+          id: msg.id!,
+          format: "metadata",
+          metadataHeaders: ["From", "Subject", "Date"],
+        });
+        
+        const headers = details.data.payload?.headers || [];
+        const from = headers.find((h) => h.name === "From")?.value || "Unknown";
+        const subject = headers.find((h) => h.name === "Subject")?.value || "(No subject)";
+        const date = headers.find((h) => h.name === "Date")?.value || "";
+        
+        return `- ${subject}\n  From: ${from}\n  Date: ${date}\n  ID: ${msg.id}`;
+      })
+    );
+    
+    return `Emails:\n${emailDetails.join("\n\n")}`;
+  } catch (error: any) {
+    throw new Error(`Failed to list emails: ${error.message}`);
+  }
+}
+
+async function readEmail(args: any): Promise<string> {
+  try {
+    const response = await gmail.users.messages.get({
+      userId: "me",
+      id: args.email_id,
+      format: "full",
+    });
+    
+    const headers = response.data.payload?.headers || [];
+    const from = headers.find((h) => h.name === "From")?.value || "Unknown";
+    const to = headers.find((h) => h.name === "To")?.value || "";
+    const cc = headers.find((h) => h.name === "Cc")?.value || "";
+    const bcc = headers.find((h) => h.name === "Bcc")?.value || "";
+    const subject = headers.find((h) => h.name === "Subject")?.value || "(No subject)";
+    const date = headers.find((h) => h.name === "Date")?.value || "";
+    
+    // Extract email body
+    let body = "";
+    if (response.data.payload?.parts) {
+      const textPart = response.data.payload.parts.find(
+        (part) => part.mimeType === "text/plain"
+      );
+      if (textPart?.body?.data) {
+        body = Buffer.from(textPart.body.data, "base64").toString("utf-8");
+      }
+    } else if (response.data.payload?.body?.data) {
+      body = Buffer.from(response.data.payload.body.data, "base64").toString("utf-8");
+    }
+    
+    // Mark as read if requested
+    if (args.mark_as_read) {
+      await gmail.users.messages.modify({
+        userId: "me",
+        id: args.email_id,
+        requestBody: {
+          removeLabelIds: ["UNREAD"],
+        },
+      });
+    }
+    
+    const ccLine = cc ? `\nCC: ${cc}` : "";
+    const bccLine = bcc ? `\nBCC: ${bcc}` : "";
+    
+    return `From: ${from}\nTo: ${to}${ccLine}${bccLine}\nSubject: ${subject}\nDate: ${date}\n\n${body}`;
+  } catch (error: any) {
+    throw new Error(`Failed to read email: ${error.message}`);
+  }
+}
+
 
 // Create MCP server
 const server = new Server(
@@ -323,7 +533,14 @@ const server = new Server(
 // Register tool handlers
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
-    tools: [CREATE_EVENT_TOOL, LIST_EVENTS_TOOL, UPDATE_EVENT_TOOL],
+    tools: [
+      CREATE_EVENT_TOOL,
+      LIST_EVENTS_TOOL,
+      UPDATE_EVENT_TOOL,
+      SEND_EMAIL_TOOL,
+      LIST_EMAILS_TOOL,
+      READ_EMAIL_TOOL,
+    ],
   };
 });
 
@@ -345,6 +562,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case "update_calendar_event":
         result = await updateCalendarEvent(args);
+        break;
+      case "send_email":
+        result = await sendEmail(args);
+        break;
+      case "list_emails":
+        result = await listEmails(args);
+        break;
+      case "read_email":
+        result = await readEmail(args);
         break;
       default:
         throw new Error(`Unknown tool: ${name}`);
