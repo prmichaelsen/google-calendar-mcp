@@ -16,9 +16,14 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:types && npm run build:bundle",
+    "build:types": "tsc --emitDeclarationOnly",
+    "build:bundle": "node esbuild.build.js",
+    "watch": "node esbuild.watch.js",
     "start": "node build/index.js",
-    "dev": "tsc && node build/index.js"
+    "dev": "npm run watch",
+    "clean": "rm -rf build",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
     "mcp",
@@ -45,6 +50,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "esbuild": "^0.24.2",
     "typescript": "^5.6.0"
   }
 }
