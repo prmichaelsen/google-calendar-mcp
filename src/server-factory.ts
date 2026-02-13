@@ -22,7 +22,8 @@ import {
 } from "./tools/email-tools.js";
 
 export interface GoogleCalendarServerOptions {
-  serviceAccountKeyPath: string;
+  serviceAccountKeyPath?: string;
+  serviceAccountKey?: any;
   calendarId?: string;
 }
 
@@ -39,8 +40,8 @@ export function createGoogleCalendarServer(
   options: GoogleCalendarServerOptions
 ): Server {
   // Initialize service account auth with user impersonation
-  const auth = new google.auth.GoogleAuth({
-    keyFile: options.serviceAccountKeyPath,
+  // Support both file path and direct credentials object
+  const authConfig: any = {
     scopes: [
       "https://www.googleapis.com/auth/calendar",
       "https://www.googleapis.com/auth/gmail.send",
@@ -50,7 +51,18 @@ export function createGoogleCalendarServer(
     clientOptions: {
       subject: userEmail, // Impersonate this user
     },
-  });
+  };
+
+  // Use keyFile if path provided, otherwise use credentials object
+  if (options.serviceAccountKeyPath) {
+    authConfig.keyFile = options.serviceAccountKeyPath;
+  } else if (options.serviceAccountKey) {
+    authConfig.credentials = options.serviceAccountKey;
+  } else {
+    throw new Error('Either serviceAccountKeyPath or serviceAccountKey must be provided');
+  }
+
+  const auth = new google.auth.GoogleAuth(authConfig);
 
   const calendar = google.calendar({ version: "v3", auth });
   const gmail = google.gmail({ version: "v1", auth });
