@@ -46,6 +46,7 @@
   "homepage": "https://github.com/prmichaelsen/calendar-mcp-server#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
+    "dotenv": "^17.3.1",
     "googleapis": "^144.0.0"
   },
   "devDependencies": {

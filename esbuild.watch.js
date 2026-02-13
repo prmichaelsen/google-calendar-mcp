@@ -29,11 +29,8 @@ const ctx = await esbuild.context({
   platform: 'node',
   target: 'node18',
   format: 'esm',
-  sourcemap: true,
-  external: [
-    '@modelcontextprotocol/sdk',
-    'googleapis'
-  ]
+  sourcemap: true
+  // Note: external is not needed when bundle: false
 });
 
 await ctx.watch();
