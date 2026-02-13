@@ -5,6 +5,88 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-02-13
+
+### Added
+
+#### Multi-Tenancy Support
+- **Server Factory Pattern**: New `createGoogleCalendarServer()` factory function for creating per-user server instances
+- **Library Exports**: Package can now be imported as a library with exports for:
+  - `@prmichaelsen/google-calendar-mcp/factory` - Server factory function
+  - `@prmichaelsen/google-calendar-mcp/tools/calendar` - Calendar tool implementations
+  - `@prmichaelsen/google-calendar-mcp/tools/email` - Email tool implementations
+- **Modular Architecture**: Tool implementations extracted to separate files for reusability
+  - `src/tools/calendar-tools.ts` - Calendar operations
+  - `src/tools/email-tools.ts` - Email operations
+  - `src/server-factory.ts` - Factory function
+
+#### Documentation
+- Multi-tenancy design document ([`agent/design/multi-tenancy-design.md`](agent/design/multi-tenancy-design.md))
+- MCP Auth integration plan ([`agent/design/mcp-auth-integration-plan.md`](agent/design/mcp-auth-integration-plan.md))
+- Factory usage examples in README
+- Task 16 documentation for refactoring process
+
+### Changed
+
+#### Breaking Changes
+- **Tool Names**: All tools now prefixed with `google_` for multi-tenant compatibility:
+  - `create_calendar_event` → `google_create_calendar_event`
+  - `list_calendar_events` → `google_list_calendar_events`
+  - `update_calendar_event` → `google_update_calendar_event`
+  - `send_email` → `google_send_email`
+  - `list_emails` → `google_list_emails`
+  - `read_email` → `google_read_email`
+
+#### Architecture
+- **Refactored `index.ts`**: Now uses factory pattern while maintaining backward compatibility
+- **Server Version**: Updated to 2.0.0 in server metadata
+- **Package Exports**: Added explicit exports map in `package.json`
+- **Files Field**: Added files field to control npm package contents
+
+### Migration Guide
+
+#### For Standalone Users
+Update your MCP settings to use new tool names:
+
+```json
+{
+  "mcpServers": {
+    "@prmichaelsen/google-calendar-mcp": {
+      "alwaysAllow": [
+        "google_create_calendar_event",
+        "google_list_calendar_events",
+        "google_update_calendar_event",
+        "google_send_email",
+        "google_list_emails",
+        "google_read_email"
+      ]
+    }
+  }
+}
+```
+
+#### For Library Users
+Import and use the factory:
+
+```typescript
+import { createGoogleCalendarServer } from '@prmichaelsen/google-calendar-mcp/factory';
+
+const server = createGoogleCalendarServer(
+  'user@workspace.com',
+  'user-id',
+  { serviceAccountKeyPath: '/path/to/key.json' }
+);
+```
+
+### Technical Details
+- Maintained backward compatibility for single-user deployments
+- No changes to Google API integration or authentication logic
+- All existing features preserved
+- TypeScript compilation with declaration files
+- Proper module resolution with Node16
+
+---
+
 ## [1.0.0] - 2026-02-13
 
 ### Added
@@ -91,4 +173,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[2.0.0]: https://github.com/prmichaelsen/calendar-mcp-server/releases/tag/v2.0.0
 [1.0.0]: https://github.com/prmichaelsen/calendar-mcp-server/releases/tag/v1.0.0

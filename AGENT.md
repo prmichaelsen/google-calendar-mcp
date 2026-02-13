@@ -555,10 +555,14 @@ The Agent Pattern represents a **paradigm shift** in how we approach AI-assisted
 
 ### Initialize Prompt
 
+**Trigger**: `AGENT.md: Initialize`
+
 Use this prompt when starting work on an ACP-structured project:
 
 ```markdown
-Read ALL files in @agent. We are going to understand this project then work on a generic task.
+First, check for ACP updates by running ./agent/scripts/check-for-updates.sh (if it exists). If updates are available, report what changed and ask if I want to update.
+
+Then read ALL files in @agent. We are going to understand this project then work on a generic task.
 
 Then read KEY src files per your understanding.
 
@@ -566,12 +570,15 @@ Then read @agent again, update stale @agent/tasks, stale documentation, and upda
 ```
 
 **Purpose**:
+- Checks for updates to ACP methodology and documentation
 - Loads complete project context from agent directory
 - Reviews source code to understand current implementation
 - Updates documentation to reflect current state
 - Ensures progress tracking is accurate
 
 ### Proceed Prompt
+
+**Trigger**: `AGENT.md: Proceed`
 
 Use this prompt to continue with the next task:
 
@@ -583,6 +590,57 @@ Let's proceed with implementing the current or next task. Remember to update @ag
 - Continues work on current or next task
 - Reminds agent to maintain progress tracking
 - Keeps workflow focused and documented
+
+### Update Prompt
+
+**Trigger**: `AGENT.md: Update`
+
+Updates all ACP files to the latest version:
+
+```markdown
+Run ./agent/scripts/update.sh to update all ACP files (AGENT.md, templates, and scripts) to the latest version.
+```
+
+**Purpose**:
+- Updates AGENT.md methodology
+- Updates all template files
+- Updates utility scripts
+- Keeps ACP current with latest improvements
+
+### Check for Updates Prompt
+
+**Trigger**: `AGENT.md: Check for updates`
+
+Checks if updates are available without applying them:
+
+```markdown
+Run ./agent/scripts/check-for-updates.sh to see if ACP updates are available.
+```
+
+**Purpose**:
+- Non-destructive check for updates
+- Shows what changed via CHANGELOG
+- Informs user of available improvements
+
+### Uninstall Prompt
+
+**Trigger**: `AGENT.md: Uninstall`
+
+Removes all ACP files from the project:
+
+```markdown
+Run ./agent/scripts/uninstall.sh to remove all ACP files (agent/ directory and AGENT.md) from this project.
+```
+
+**Note**: This script requires user confirmation. If the user confirms they want to uninstall, run:
+```bash
+./agent/scripts/uninstall.sh -y
+```
+
+**Purpose**:
+- Complete removal of ACP
+- Clean project state
+- Reversible via git
 
 ---
 
@@ -815,6 +873,28 @@ Let's proceed with implementing the current or next task. Remember to update @ag
 
 ---
 
+## Keeping ACP Updated
+
+This repository is actively maintained with improvements to the ACP methodology and documentation. To keep your project's AGENT.md current:
+
+```bash
+# Run from your project root (if you have the update script installed)
+./agent/scripts/update.sh
+
+# Or download and run directly
+curl -fsSL https://raw.githubusercontent.com/prmichaelsen/agent-context-protocol/mainlin./agent/scripts/update.sh | bash
+```
+
+The update script will:
+1. Create a backup of your current AGENT.md
+2. Download the latest version
+3. Show you the changes
+4. Ask for confirmation before applying
+
+See [CHANGELOG.md](https://github.com/prmichaelsen/agent-context-protocol/blob/main/CHANGELOG.md) for version history and changes.
+
+---
+
 ## Conclusion
 
 The Agent Directory Pattern transforms software development from an implicit, memory-dependent process into an explicit, documented system that enables AI agents to work effectively on complex projects.
@@ -841,6 +921,129 @@ The Agent Directory Pattern transforms software development from an implicit, me
 - ❌ One-off prototypes
 - ❌ Throwaway code
 - ❌ Simple, well-understood problems
+
+---
+
+## What NOT to Do
+
+### ❌ CRITICAL: Don't Create Summary Documents
+
+**NEVER create these files under ANY circumstances:**
+- `TASK_SUMMARY.md`
+- `PROJECT_SUMMARY.md`
+- `MILESTONE_SUMMARY.md`
+- `PROGRESS_SUMMARY.md`
+- Any file with `SUMMARY` in the name
+
+**Why**: All summary information belongs in [`progress.yaml`](agent/progress.yaml). Creating separate summary documents:
+- Duplicates information
+- Creates inconsistency
+- Requires maintaining multiple files
+- Defeats the purpose of structured progress tracking
+
+**Instead**: Update [`progress.yaml`](agent/progress.yaml):
+```yaml
+recent_work:
+  - date: 2026-02-13
+    description: Summary of work completed
+    items:
+      - ✅ Completed task 1
+      - ✅ Completed task 2
+```
+
+### ❌ CRITICAL: Don't Create Variant Task Documents
+
+**NEVER create these files under ANY circumstances:**
+- `task-1-simplified.md`
+- `task-1-revised.md`
+- `task-1-v2.md`
+- `task-1-updated.md`
+- `task-1-alternative.md`
+
+**Why**: Task documents are living documents that should be updated in place. Creating variants:
+- Creates confusion about which is current
+- Scatters information across multiple files
+- Makes progress tracking impossible
+- Violates single source of truth principle
+
+**Instead**: Modify the existing task document directly:
+```markdown
+# Task 1: Setup Project
+
+**Status**: In Progress (Updated 2026-02-13)
+
+## Steps
+1. Create directory ✅ (Completed)
+2. Install dependencies ✅ (Completed)
+3. Configure build (Updated: Changed from webpack to esbuild)
+
+## Notes
+- Originally planned to use webpack
+- Switched to esbuild for better performance
+- Updated configuration accordingly
+```
+
+### ✅ Correct Approach
+
+1. **For summaries**: Update [`progress.yaml`](agent/progress.yaml)
+2. **For task changes**: Modify existing task documents in place
+3. **For major changes**: Update the task and note the changes in [`progress.yaml`](agent/progress.yaml)
+4. **For new work**: Create new task documents with new numbers
+
+---
+
+## IMPORTANT: CHANGELOG.md Guidelines
+
+### ❌ CRITICAL: Keep CHANGELOG.md Pure
+
+**CHANGELOG.md must ONLY contain:**
+- Version numbers and dates
+- Added features
+- Changed functionality
+- Removed features
+- Fixed bugs
+
+**NEVER include in CHANGELOG.md:**
+- ❌ Future enhancements or roadmap
+- ❌ How-to instructions or usage guides
+- ❌ Installation instructions
+- ❌ Configuration examples
+- ❌ Detailed documentation
+
+**Why**: CHANGELOG.md is a historical record of what changed, not a documentation file. Mixing concerns makes it harder to:
+- Understand version history
+- Track actual changes
+- Maintain the changelog
+- Find relevant information
+
+**Correct CHANGELOG.md format:**
+```markdown
+## [1.0.4] - 2026-02-13
+
+### Added
+- New feature X
+- New feature Y
+
+### Changed
+- Modified behavior of Z
+
+### Removed
+- Deprecated feature A
+```
+
+**Wrong CHANGELOG.md format:**
+```markdown
+## [1.0.4] - 2026-02-13
+
+### Added
+- New feature X
+
+### How to Use Feature X
+[Installation instructions...]  # ❌ WRONG - belongs in README
+
+### Future Enhancements
+- Plan to add Y  # ❌ WRONG - belongs in design docs or issues
+```
 
 ---
 

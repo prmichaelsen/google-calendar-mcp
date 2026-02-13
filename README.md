@@ -1,8 +1,11 @@
 # Google Calendar MCP Server
 
 **Package**: `@prmichaelsen/google-calendar-mcp`
+**Version**: 2.0.0
 
 A TypeScript-based Model Context Protocol (MCP) server for Google Calendar and Gmail integration using service account authentication with domain-wide delegation.
+
+**New in v2.0**: Factory pattern support for multi-tenant deployments. Can be used as a standalone server or imported as a library for wrapper projects.
 
 **Note:** This is a minimal implementation covering the most common use cases. The Google Calendar API has many more features (recurring events, calendar management, ACLs, etc.) that are not implemented here. This server focuses on basic event CRUD operations with reminders and attendee management.
 
@@ -224,6 +227,58 @@ Update an existing calendar event by its ID.
   ]
 }
 ```
+
+## Using as a Library
+
+This package can be used as a base for multi-tenant MCP servers:
+
+```typescript
+import { createGoogleCalendarServer } from '@prmichaelsen/google-calendar-mcp/factory';
+
+const server = createGoogleCalendarServer(
+  'user@workspace.com',  // User to impersonate
+  'user-123',            // User ID for tracking
+  {
+    serviceAccountKeyPath: '/path/to/key.json',
+    calendarId: 'primary'
+  }
+);
+
+// Connect to transport (stdio, SSE, etc.)
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+const transport = new StdioServerTransport();
+await server.connect(transport);
+```
+
+### Factory Options
+
+```typescript
+interface GoogleCalendarServerOptions {
+  serviceAccountKeyPath: string;  // Required: Path to service account JSON key
+  calendarId?: string;            // Optional: Calendar ID (defaults to "primary")
+}
+```
+
+### Multi-Tenant Integration
+
+For multi-tenant deployments with Platform JWT authentication, see:
+- [Multi-Tenancy Design](agent/design/multi-tenancy-design.md)
+- [MCP Auth Integration Plan](agent/design/mcp-auth-integration-plan.md)
+
+The factory pattern enables wrapping this server with `@prmichaelsen/mcp-auth` for per-user authentication and authorization.
+
+## Tool Names
+
+**v2.0 Breaking Change**: All tools now have a `google_` prefix for multi-tenant compatibility:
+
+- `google_create_calendar_event` (was `create_calendar_event`)
+- `google_list_calendar_events` (was `list_calendar_events`)
+- `google_update_calendar_event` (was `update_calendar_event`)
+- `google_send_email` (was `send_email`)
+- `google_list_emails` (was `list_emails`)
+- `google_read_email` (was `read_email`)
+
+**Note**: If you're using the standalone server (not as a library), update your MCP settings to use the new tool names.
 
 ## Development
 

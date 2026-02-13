@@ -1,9 +1,9 @@
 project:
   name: "@prmichaelsen/google-calendar-mcp"
-  version: 1.0.0
+  version: 2.0.0
   started: 2026-02-13
-  status: completed
-  current_milestone: M3
+  status: in_progress
+  current_milestone: M4
   repository: "https://github.com/prmichaelsen/calendar-mcp-server"
 
 milestones:
@@ -191,10 +191,10 @@ tasks:
         - Milestone 3: ACP Initialization
 
 documentation:
-  design_documents: 2
-  milestone_documents: 3
+  design_documents: 4
+  milestone_documents: 4
   pattern_documents: 3
-  task_documents: 0
+  task_documents: 1
 
 progress:
   planning: 100%
@@ -203,6 +203,41 @@ progress:
   overall: 100%
 
 recent_work:
+  - date: 2026-02-13
+    description: Task 16 completed - Multi-tenancy refactor successful
+    items:
+      - ✅ Extracted tool implementations to src/tools/calendar-tools.ts
+      - ✅ Extracted tool implementations to src/tools/email-tools.ts
+      - ✅ Created server factory in src/server-factory.ts
+      - ✅ Updated src/index.ts to use factory (backward compatible)
+      - ✅ Updated package.json to v2.0.0 with exports
+      - ✅ Updated README.md with factory usage and breaking changes
+      - ✅ Updated CHANGELOG.md with comprehensive v2.0.0 notes
+      - ✅ Build successful - all files compiled with declarations
+      - ✅ All 6 tools renamed with google_ prefix
+      - ✅ Package ready for npm publish and library usage
+
+  - date: 2026-02-13
+    description: ACP initialization completed - agent context loaded
+    items:
+      - ✅ Verified AGENT.md is up to date (v1.0.3)
+      - ✅ Read all agent design documents (4 files)
+      - ✅ Read all milestone documents (3 files)
+      - ✅ Read all pattern documents (3 files)
+      - ✅ Read task document (Task 16)
+      - ✅ Read key source files (index.ts, package.json, README.md, CHANGELOG.md)
+      - ✅ Updated progress.yaml with initialization status
+      - 📋 Project context fully loaded and understood
+
+  - date: 2026-02-13
+    description: Created multi-tenancy integration plan and task
+    items:
+      - ✅ Created multi-tenancy design document
+      - ✅ Created mcp-auth integration plan
+      - ✅ Created Task 16: Refactor for multi-tenancy
+      - 📋 Task includes server factory, tool renaming, exports
+      - 📋 Ready to implement in next session
+
   - date: 2026-02-13
     description: Project renamed and published
     items:
@@ -229,17 +264,23 @@ recent_work:
       - ✅ Updated progress.yaml with final status
 
 next_steps:
-  - Project is complete and production-ready
-  - Future enhancements can be added as new milestones
-  - Maintain ACP structure as project evolves
-  - Consider adding: event deletion, recurring events, email attachments
+  - Publish v2.0.0 to npm registry
+  - Test factory imports in separate project
+  - Create wrapper project (google-calendar-mcp-server) in separate repo
+  - Implement mcp-auth integration following bootstrap pattern
+  - Deploy multi-tenant server to Cloud Run
+  - Add unit tests for tool implementations
+  - Add integration tests for factory pattern
 
 notes:
-  - Project is fully functional and production-ready
-  - ACP structure successfully added to existing project
-  - All core requirements implemented and documented
-  - Comprehensive pattern library established
-  - Ready for future enhancements
+  - v2.0.0 refactor completed successfully
+  - Factory pattern enables multi-tenant deployments
+  - Backward compatibility maintained for single-user mode
+  - All tools renamed with google_ prefix (breaking change)
+  - Package exports configured for library usage
+  - Build output includes TypeScript declarations
+  - Ready for npm publish and wrapper project integration
+  - ACP structure successfully maintained throughout refactor
 
 current_blockers: []
 
