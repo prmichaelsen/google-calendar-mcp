@@ -69,10 +69,10 @@ export function createGoogleCalendarServer(
     }
   );
 
-  // Define tools with google_ prefix (required by mcp-auth pattern)
+  // Define tools with google_calendar_ prefix (matches resourceType: 'google-calendar')
   const tools: Tool[] = [
     {
-      name: "google_create_calendar_event",
+      name: "google_calendar_create_calendar_event",
       description:
         "Create a new event in Google Calendar with specified details including title, description, start/end times, and optional attendees",
       inputSchema: {
@@ -132,7 +132,7 @@ export function createGoogleCalendarServer(
       },
     },
     {
-      name: "google_list_calendar_events",
+      name: "google_calendar_list_calendar_events",
       description:
         "List upcoming events from Google Calendar within a specified time range",
       inputSchema: {
@@ -156,7 +156,7 @@ export function createGoogleCalendarServer(
       },
     },
     {
-      name: "google_update_calendar_event",
+      name: "google_calendar_update_calendar_event",
       description:
         "Update an existing calendar event by event ID. Can modify title, description, times, location, and attendees.",
       inputSchema: {
@@ -220,7 +220,7 @@ export function createGoogleCalendarServer(
       },
     },
     {
-      name: "google_send_email",
+      name: "google_calendar_send_email",
       description:
         "Send an email from the configured Gmail account. Supports plain text and HTML emails with optional attachments.",
       inputSchema: {
@@ -259,7 +259,7 @@ export function createGoogleCalendarServer(
       },
     },
     {
-      name: "google_list_emails",
+      name: "google_calendar_list_emails",
       description:
         "List emails from Gmail inbox with optional search query. Returns email metadata including ID, subject, sender, and snippet.",
       inputSchema: {
@@ -278,7 +278,7 @@ export function createGoogleCalendarServer(
       },
     },
     {
-      name: "google_read_email",
+      name: "google_calendar_read_email",
       description:
         "Read the full content of an email by its ID. Returns subject, sender, recipients, body, and metadata.",
       inputSchema: {
@@ -315,22 +315,22 @@ export function createGoogleCalendarServer(
 
       let result: string;
       switch (name) {
-        case "google_create_calendar_event":
+        case "google_calendar_create_calendar_event":
           result = await createCalendarEvent(calendar, calendarId, args);
           break;
-        case "google_list_calendar_events":
+        case "google_calendar_list_calendar_events":
           result = await listCalendarEvents(calendar, calendarId, args);
           break;
-        case "google_update_calendar_event":
+        case "google_calendar_update_calendar_event":
           result = await updateCalendarEvent(calendar, calendarId, args);
           break;
-        case "google_send_email":
+        case "google_calendar_send_email":
           result = await sendEmail(gmail, args);
           break;
-        case "google_list_emails":
+        case "google_calendar_list_emails":
           result = await listEmails(gmail, args);
           break;
-        case "google_read_email":
+        case "google_calendar_read_email":
           result = await readEmail(gmail, args);
           break;
         default:

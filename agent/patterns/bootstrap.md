@@ -400,7 +400,7 @@ const wrappedServer = wrapServer({
   // Authentication
   authProvider,
   tokenResolver: credentialsResolver,
-  resourceType: 'google', // Tools must be named google_*
+  resourceType: 'google-calendar', // Tools must be named google_calendar_*
   
   // Transport
   transport: {

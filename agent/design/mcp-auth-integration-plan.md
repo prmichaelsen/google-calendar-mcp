@@ -315,7 +315,7 @@ export class GoogleCredentialsResolver implements ResourceTokenResolver {
   /**
    * Resolve user's Google Workspace email address
    * @param userId - Platform user ID
-   * @param resourceType - Should be 'google'
+   * @param resourceType - Should be 'google-calendar'
    * @returns User's Google Workspace email address
    */
   async resolveToken(userId: string, resourceType: string): Promise<string | null> {
@@ -456,7 +456,7 @@ const wrappedServer = wrapServer({
   },
   authProvider,
   tokenResolver: credentialsResolver,
-  resourceType: 'google', // Tools must be named google_*
+  resourceType: 'google-calendar', // Tools must be named google_calendar_*
   transport: {
     type: 'sse',
     port: config.server.port,
