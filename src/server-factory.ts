@@ -22,8 +22,13 @@ import {
 } from "./tools/email-tools.js";
 
 export interface GoogleCalendarServerOptions {
-  serviceAccountKeyPath?: string;
-  serviceAccountKey?: any;
+  /**
+   * Service account credentials - can be:
+   * - File path (string): "/path/to/key.json"
+   * - JSON string: '{"type":"service_account",...}'
+   * - Credentials object: {type:"service_account",...}
+   */
+  serviceAccountKey: string | any;
   calendarId?: string;
 }
 
@@ -40,7 +45,7 @@ export function createGoogleCalendarServer(
   options: GoogleCalendarServerOptions
 ): Server {
   // Initialize service account auth with user impersonation
-  // Support both file path and direct credentials object
+  // Auto-detect if serviceAccountKey is a path, JSON string, or object
   const authConfig: any = {
     scopes: [
       "https://www.googleapis.com/auth/calendar",
@@ -53,13 +58,28 @@ export function createGoogleCalendarServer(
     },
   };
 
-  // Use keyFile if path provided, otherwise use credentials object
-  if (options.serviceAccountKeyPath) {
-    authConfig.keyFile = options.serviceAccountKeyPath;
-  } else if (options.serviceAccountKey) {
-    authConfig.credentials = options.serviceAccountKey;
+  const key = options.serviceAccountKey;
+  
+  if (typeof key === 'string') {
+    // Try to parse as JSON first
+    try {
+      const parsed = JSON.parse(key);
+      if (parsed.type === 'service_account') {
+        // It's a JSON string containing credentials
+        authConfig.credentials = parsed;
+      } else {
+        // Not valid service account JSON, treat as file path
+        authConfig.keyFile = key;
+      }
+    } catch {
+      // Not JSON, treat as file path
+      authConfig.keyFile = key;
+    }
+  } else if (typeof key === 'object' && key !== null) {
+    // It's already a credentials object
+    authConfig.credentials = key;
   } else {
-    throw new Error('Either serviceAccountKeyPath or serviceAccountKey must be provided');
+    throw new Error('serviceAccountKey must be a file path, JSON string, or credentials object');
   }
 
   const auth = new google.auth.GoogleAuth(authConfig);

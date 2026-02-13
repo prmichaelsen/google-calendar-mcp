@@ -25,7 +25,7 @@ const server = createGoogleCalendarServer(
   GOOGLE_CALENDAR_SUBJECT,
   "single-user", // userId for single-user mode
   {
-    serviceAccountKeyPath: GOOGLE_APPLICATION_CREDENTIALS,
+    serviceAccountKey: GOOGLE_APPLICATION_CREDENTIALS,
     calendarId: GOOGLE_CALENDAR_ID,
   }
 );
