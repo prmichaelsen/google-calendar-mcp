@@ -60,24 +60,25 @@ export function createGoogleCalendarServer(
 
   const key = options.serviceAccountKey;
   
-  if (typeof key === 'string') {
-    // Try to parse as JSON first
+  if (typeof key === 'object' && key !== null) {
+    // It's already a credentials object - use directly
+    authConfig.credentials = key;
+  } else if (typeof key === 'string') {
+    // Could be JSON string or file path
+    // Try parsing as JSON first (for Cloud Run secrets)
     try {
       const parsed = JSON.parse(key);
-      if (parsed.type === 'service_account') {
-        // It's a JSON string containing credentials
+      if (parsed && typeof parsed === 'object' && parsed.type === 'service_account') {
+        // Valid service account JSON - use as credentials
         authConfig.credentials = parsed;
       } else {
-        // Not valid service account JSON, treat as file path
+        // Parsed but not service account format - treat as file path
         authConfig.keyFile = key;
       }
-    } catch {
-      // Not JSON, treat as file path
+    } catch (error) {
+      // Not valid JSON - treat as file path
       authConfig.keyFile = key;
     }
-  } else if (typeof key === 'object' && key !== null) {
-    // It's already a credentials object
-    authConfig.credentials = key;
   } else {
     throw new Error('serviceAccountKey must be a file path, JSON string, or credentials object');
   }
