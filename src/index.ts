@@ -401,19 +401,54 @@ async function sendEmail(args: any): Promise<string> {
     const cc = args.cc && Array.isArray(args.cc) ? args.cc.join(", ") : "";
     const bcc = args.bcc && Array.isArray(args.bcc) ? args.bcc.join(", ") : "";
     
-    const contentType = args.is_html ? "text/html" : "text/plain";
+    let message: string;
     
-    const messageParts = [
-      `To: ${to}`,
-      cc ? `Cc: ${cc}` : "",
-      bcc ? `Bcc: ${bcc}` : "",
-      `Subject: ${args.subject}`,
-      `Content-Type: ${contentType}; charset=utf-8`,
-      "",
-      args.body,
-    ].filter(Boolean);
+    if (args.is_html) {
+      // For HTML emails, create a multipart/alternative message with both plain text and HTML
+      const boundary = "===============" + Date.now() + "==";
+      const plainText = args.body.replace(/<[^>]*>/g, ''); // Strip HTML tags for plain text version
+      
+      // Build MIME multipart message - blank lines are critical!
+      const parts = [];
+      parts.push(`To: ${to}`);
+      if (cc) parts.push(`Cc: ${cc}`);
+      if (bcc) parts.push(`Bcc: ${bcc}`);
+      parts.push(`Subject: ${args.subject}`);
+      parts.push(`MIME-Version: 1.0`);
+      parts.push(`Content-Type: multipart/alternative; boundary="${boundary}"`);
+      parts.push(``); // CRITICAL blank line after headers
+      parts.push(`--${boundary}`);
+      parts.push(`Content-Type: text/plain; charset=utf-8`);
+      parts.push(`Content-Transfer-Encoding: 7bit`);
+      parts.push(``); // CRITICAL blank line before content
+      parts.push(plainText);
+      parts.push(``); // blank line after content
+      parts.push(`--${boundary}`);
+      parts.push(`Content-Type: text/html; charset=utf-8`);
+      parts.push(`Content-Transfer-Encoding: 7bit`);
+      parts.push(``); // CRITICAL blank line before content
+      parts.push(args.body);
+      parts.push(``); // blank line after content
+      parts.push(`--${boundary}--`);
+      
+      const messageParts = parts;
+      
+      message = messageParts.join("\r\n");
+    } else {
+      // For plain text emails, use simple format
+      const messageParts = [
+        `To: ${to}`,
+        cc ? `Cc: ${cc}` : "",
+        bcc ? `Bcc: ${bcc}` : "",
+        `Subject: ${args.subject}`,
+        `Content-Type: text/plain; charset=utf-8`,
+        "",
+        args.body,
+      ].filter(Boolean);
+      
+      message = messageParts.join("\r\n");
+    }
     
-    const message = messageParts.join("\r\n");
     const encodedMessage = Buffer.from(message).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
     
     const response = await gmail.users.messages.send({

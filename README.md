@@ -1,6 +1,8 @@
-# Calendar MCP Server
+# Google Calendar MCP Server
 
-A TypeScript-based Model Context Protocol (MCP) server for Google Calendar integration using service account authentication with domain-wide delegation.
+**Package**: `@prmichaelsen/google-calendar-mcp`
+
+A TypeScript-based Model Context Protocol (MCP) server for Google Calendar and Gmail integration using service account authentication with domain-wide delegation.
 
 **Note:** This is a minimal implementation covering the most common use cases. The Google Calendar API has many more features (recurring events, calendar management, ACLs, etc.) that are not implemented here. This server focuses on basic event CRUD operations with reminders and attendee management.
 
@@ -107,7 +109,7 @@ Add to your MCP settings file (`.vscode-server/data/User/globalStorage/kilocode.
 ```json
 {
   "mcpServers": {
-    "google-calendar": {
+    "@prmichaelsen/google-calendar-mcp": {
       "command": "node",
       "args": ["/path/to/calendar-mcp-server/build/index.js"],
       "env": {
@@ -118,7 +120,10 @@ Add to your MCP settings file (`.vscode-server/data/User/globalStorage/kilocode.
       "alwaysAllow": [
         "create_calendar_event",
         "list_calendar_events",
-        "update_calendar_event"
+        "update_calendar_event",
+        "send_email",
+        "list_emails",
+        "read_email"
       ]
     }
   }
