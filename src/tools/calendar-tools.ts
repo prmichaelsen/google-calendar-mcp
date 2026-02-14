@@ -6,7 +6,8 @@ export async function createCalendarEvent(
   calendar: any,
   calendarId: string,
   args: any,
-  userId?: string
+  userId?: string,
+  userEmail?: string
 ): Promise<string> {
   try {
     const event: any = {
@@ -31,8 +32,12 @@ export async function createCalendarEvent(
       };
     }
 
+    // Handle attendees
     if (args.attendees && Array.isArray(args.attendees)) {
       event.attendees = args.attendees.map((email: string) => ({ email }));
+    } else if (userEmail && args.add_user_as_attendee !== false) {
+      // Auto-add user's email as attendee if not explicitly disabled
+      event.attendees = [{ email: userEmail }];
     }
 
     if (args.reminders && Array.isArray(args.reminders)) {

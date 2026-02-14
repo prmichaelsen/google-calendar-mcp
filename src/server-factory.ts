@@ -44,6 +44,8 @@ export function createGoogleCalendarServer(
   userId: string,
   options: GoogleCalendarServerOptions
 ): Server {
+  // Store userEmail for use in tools
+  const contextUserEmail = userEmail;
   // Initialize service account auth with user impersonation
   // Auto-detect if serviceAccountKey is a path, JSON string, or object
   const authConfig: any = {
@@ -349,7 +351,7 @@ export function createGoogleCalendarServer(
       let result: string;
       switch (name) {
         case "google_calendar_create_calendar_event":
-          result = await createCalendarEvent(calendar, calendarId, args, userId);
+          result = await createCalendarEvent(calendar, calendarId, args, userId, contextUserEmail);
           break;
         case "google_calendar_list_calendar_events":
           result = await listCalendarEvents(calendar, calendarId, args, userId);
