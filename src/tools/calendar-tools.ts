@@ -5,7 +5,8 @@
 export async function createCalendarEvent(
   calendar: any,
   calendarId: string,
-  args: any
+  args: any,
+  userId?: string
 ): Promise<string> {
   try {
     const event: any = {
@@ -19,6 +20,16 @@ export async function createCalendarEvent(
         dateTime: args.end_time,
       },
     };
+
+    // Add userId to extended properties for multi-tenant isolation
+    if (userId) {
+      event.extendedProperties = {
+        private: {
+          userId: userId,
+          createdBy: 'mcp-server'
+        }
+      };
+    }
 
     if (args.attendees && Array.isArray(args.attendees)) {
       event.attendees = args.attendees.map((email: string) => ({ email }));
@@ -48,17 +59,25 @@ export async function createCalendarEvent(
 export async function listCalendarEvents(
   calendar: any,
   calendarId: string,
-  args: any
+  args: any,
+  userId?: string
 ): Promise<string> {
   try {
-    const response = await calendar.events.list({
+    const listParams: any = {
       calendarId: calendarId,
       timeMin: args.time_min || new Date().toISOString(),
       timeMax: args.time_max,
       maxResults: args.max_results || 10,
       singleEvents: true,
       orderBy: "startTime",
-    });
+    };
+
+    // Filter by userId for multi-tenant isolation
+    if (userId) {
+      listParams.privateExtendedProperty = `userId=${userId}`;
+    }
+
+    const response = await calendar.events.list(listParams);
 
     const events = response.data.items;
     if (!events || events.length === 0) {
@@ -79,7 +98,8 @@ export async function listCalendarEvents(
 export async function updateCalendarEvent(
   calendar: any,
   calendarId: string,
-  args: any
+  args: any,
+  userId?: string
 ): Promise<string> {
   try {
     // First, get the existing event
@@ -87,6 +107,14 @@ export async function updateCalendarEvent(
       calendarId: calendarId,
       eventId: args.event_id,
     });
+
+    // Verify ownership for multi-tenant isolation
+    if (userId) {
+      const eventUserId = existingEvent.data.extendedProperties?.private?.userId;
+      if (eventUserId && eventUserId !== userId) {
+        throw new Error('Unauthorized: Event belongs to different user');
+      }
+    }
 
     // Build update object with only provided fields
     const updates: any = {};

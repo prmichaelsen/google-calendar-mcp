@@ -349,13 +349,13 @@ export function createGoogleCalendarServer(
       let result: string;
       switch (name) {
         case "google_calendar_create_calendar_event":
-          result = await createCalendarEvent(calendar, calendarId, args);
+          result = await createCalendarEvent(calendar, calendarId, args, userId);
           break;
         case "google_calendar_list_calendar_events":
-          result = await listCalendarEvents(calendar, calendarId, args);
+          result = await listCalendarEvents(calendar, calendarId, args, userId);
           break;
         case "google_calendar_update_calendar_event":
-          result = await updateCalendarEvent(calendar, calendarId, args);
+          result = await updateCalendarEvent(calendar, calendarId, args, userId);
           break;
         case "google_calendar_send_email":
           result = await sendEmail(gmail, args);
