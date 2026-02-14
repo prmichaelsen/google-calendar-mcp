@@ -30,6 +30,12 @@ export interface GoogleCalendarServerOptions {
    */
   serviceAccountKey: string | any;
   calendarId?: string;
+  /**
+   * User's personal email for auto-attendee feature
+   * If provided, user will be automatically added as attendee to events they create
+   * Can be disabled per-event with add_user_as_attendee: false
+   */
+  userEmail?: string;
 }
 
 /**
@@ -44,8 +50,8 @@ export function createGoogleCalendarServer(
   userId: string,
   options: GoogleCalendarServerOptions
 ): Server {
-  // Store userEmail for use in tools
-  const contextUserEmail = userEmail;
+  // Store user's personal email for auto-attendee feature
+  const userPersonalEmail = options.userEmail;
   // Initialize service account auth with user impersonation
   // Auto-detect if serviceAccountKey is a path, JSON string, or object
   const authConfig: any = {
@@ -351,7 +357,7 @@ export function createGoogleCalendarServer(
       let result: string;
       switch (name) {
         case "google_calendar_create_calendar_event":
-          result = await createCalendarEvent(calendar, calendarId, args, userId, contextUserEmail);
+          result = await createCalendarEvent(calendar, calendarId, args, userId, userPersonalEmail);
           break;
         case "google_calendar_list_calendar_events":
           result = await listCalendarEvents(calendar, calendarId, args, userId);
