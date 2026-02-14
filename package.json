@@ -1,6 +1,6 @@
 {
   "name": "@prmichaelsen/google-calendar-mcp",
-  "version": "2.3.6",
+  "version": "2.4.0",
   "description": "Google Calendar and Gmail MCP Server with Service Account Authentication",
   "type": "module",
   "main": "build/index.js",
