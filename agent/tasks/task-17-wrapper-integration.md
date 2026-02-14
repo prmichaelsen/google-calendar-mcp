@@ -14,15 +14,17 @@ Update the wrapper server to use the latest version of `@prmichaelsen/google-cal
 1. Smart service account key detection (fixes ENOENT error)
 2. userId-based event isolation (multi-tenant security)
 3. Tool names updated to `google_calendar_*` prefix
+4. Auto-attendee feature (user automatically added to their events)
 
 ## Background
 
 The base package has been updated with critical fixes:
+- **Commit 67f1c6e**: Auto-add user as attendee to their own events
 - **Commit ee5d7d5**: userId-based isolation with metadata filtering
 - **Commit 18921ac**: Smart credentials detection (object/JSON/path)
 - **Commit fc6d7dd**: Tool names changed to `google_calendar_*`
 
-These changes fix the ENOENT error and enable secure multi-tenancy.
+These changes fix the ENOENT error, enable secure multi-tenancy, and ensure users receive notifications for their events.
 
 ## Prerequisites
 
